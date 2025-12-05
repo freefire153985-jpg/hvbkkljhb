@@ -1,0 +1,11 @@
+{
+  "name": "afkbot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mineflayer": "^4.33.0"
+  }
+}
