@@ -19,24 +19,38 @@ app.listen(port, "0.0.0.0", () => {
 });
 
 // =============================
-// تشغيل البوت
+// 🔁 تشغيل البوت مع إعادة المحاولة كل 5 ثواني
 // =============================
 function startBot() {
-  console.log("🤖 ...محاولة تشغيل البوت");
+  console.log("🤖 محاولة تشغيل البوت...");
 
-  const bot = mineflayer.createBot({
-    host: "ameer123123.aternos.me",
-    port: 22301,
-    username: "BotAFK",
-    version: false,
+  let bot;
+
+  try {
+    bot = mineflayer.createBot({
+      host: "ameer123123.aternos.me",
+      port: 22301,
+      username: "BotAFK",
+      version: false,
+    });
+  } catch (err) {
+    console.log("❌ السيرفر مغلق... إعادة المحاولة بعد 5 ثواني");
+    return setTimeout(startBot, 5000);
+  }
+
+  // عند تسجيل الدخول
+  bot.on("login", () => {
+    console.log("🔓 تم الاتصال بالسيرفر (Login)");
   });
 
+  // عند الدخول للعبة
   bot.once("spawn", () => {
-    console.log("✅ البوت دخل السيرفر بنجاح!");
+    console.log("✅ دخل السيرفر بنجاح!");
+    bot.chat("🤖 عدت للعمل!");
   });
 
   // =============================
-  // ✔️ إضافة أمر !tp هنا
+  // ✔️ أمر !tp
   // =============================
   bot.on("chat", async (username, message) => {
     if (username === bot.username) return;
@@ -45,7 +59,7 @@ function startBot() {
       const target = bot.players[username]?.entity;
 
       if (!target) {
-        bot.chat("ما اقدر احدد مكانك 🚫");
+        bot.chat("🚫 ما اقدر احدد مكانك");
         return;
       }
 
@@ -53,37 +67,74 @@ function startBot() {
 
       try {
         await bot.teleport(pos);
-        bot.chat("✨ تم التيلبورت لعندك!");
+        bot.chat("✨ تم التيلبورت!");
         console.log(`➡️ تيلبورت إلى ${username}`);
       } catch (err) {
-        bot.chat("❌ في خطأ بالتيلبورت!");
+        bot.chat("❌ خطأ بالتيلبورت!");
         console.log(err);
       }
     }
   });
+
+  // =============================
+  // 🛡️ أقوى Anti-AFK
   // =============================
 
-  // حركة AFK
+  // 1 — حركة اتجاهات
   setInterval(() => {
     const moves = ["forward", "back", "left", "right"];
     const move = moves[Math.floor(Math.random() * moves.length)];
 
-    try {
-      bot.setControlState(move, true);
-      setTimeout(() => bot.setControlState(move, false), 800);
-      console.log("➡️ تحرك:", move);
-    } catch (err) {
-      console.log("❌ خطأ أثناء الحركة:", err);
-    }
-  }, 5000);
+    bot.setControlState(move, true);
+    setTimeout(() => bot.setControlState(move, false), 700);
 
+    console.log("🚶 حركة:", move);
+  }, 4000);
+
+  // 2 — قفزات
+  setInterval(() => {
+    bot.setControlState("jump", true);
+    setTimeout(() => bot.setControlState("jump", false), 250);
+    console.log("🦘 Jump!");
+  }, 8000);
+
+  // 3 — ضرب
+  setInterval(() => {
+    bot.swingArm();
+    console.log("✊ Swing!");
+  }, 6000);
+
+  // 4 — دوران كاميرا
+  setInterval(() => {
+    const yaw = bot.entity.yaw + (Math.random() * 2 - 1);
+    bot.look(yaw, 0, true);
+    console.log("👀 Look rotation");
+  }, 7000);
+
+  // 5 — رسالة AFK
+  setInterval(() => {
+    bot.chat("🤖 AFK");
+  }, 60000);
+
+  // =============================
+  // 🔄 Auto Reconnect + Retry
+  // =============================
   bot.on("end", () => {
-    console.log("⚠️ انفصل الاتصال! إعادة التشغيل بعد 5 ثوان...");
+    console.log("⚠️ الاتصال انقطع!");
+    console.log("🔁 إعادة المحاولة بعد 5 ثواني...");
+    setTimeout(startBot, 5000);
+  });
+
+  bot.on("kicked", (reason) => {
+    console.log("❌ تم طرد البوت:", reason);
+    console.log("🔁 إعادة المحاولة بعد 5 ثواني...");
     setTimeout(startBot, 5000);
   });
 
   bot.on("error", (err) => {
-    console.log("❌ Error:", err);
+    console.log("❌ Error:", err.message);
+    console.log("🔁 إعادة المحاولة بعد 5 ثواني...");
+    setTimeout(startBot, 5000);
   });
 }
 
